@@ -1,0 +1,44 @@
+一、简单题
+
+1、Mybatis动态sql是做什么的？都有哪些动态sql？简述一下动态sql的执行原理？
+作用：在初始化加载sql时，执行逻辑判断，动态拼接sql
+bind
+if
+choose
+when
+otherwise
+trim
+where
+set
+foreach
+
+if
+原理：
+1.SqlSessionFactoryBuilder.build方法创建XMLConfigBuilder.parser进行配置文件的解析
+2.解析mapper内部sql时，会执行mapperElement方法，如果是配置的xml映射文件，创建XMLMapperBuilder初始化，并parse解析内部标签及内容
+3.configurationElement()内部，执行buildStatementFromContext方法 创建XMLStatementBuilder parseStatementNode方法对标签内部进行解析
+4.创建LanguageDriver 对象(默认XMLLanguageDriver) 调用createSqlSource创建SqlSource，并在执行createSqlSource时，创建 XMLScriptBuilder 对象（对动态sql标签名进行初始化），执行parseScriptNode进行解析
+5.NodeHandler提供了BindHandler、TrimHandler、WhereHandler等一系列动态sql标签的处理器，判断解析的标签并生成响应的处理器进行处理，处理后的数据添加到List<SqlNode> contents中
+6.执行后得到sqlSource，并会封装到MappedStatement中，最终封装到Configuration，后续创建BoundSql时会进行sql拼接
+
+
+2、Mybatis是否支持延迟加载？如果支持，它的实现原理是什么？
+支持：使用association、collection实现一对一及一对多映射
+Settings：
+lazyLoadingEnabled：延迟加载的全局开关。当开启时，所有关联对象都会延迟加载。 特定关联关系中可通过设置fetchType属性来覆盖该项的开关状态。
+aggressiveLazyLoading：当开启时，任何方法的调用都会加载该对象的所有属性。否则，每个属性会按需加载。
+lazyLoadTriggerMethods：指定哪个对象的方法触发一次延迟加载。
+
+原理：ResultSetHandler处理返回结果时，使用动态代理，JavassistProxyFactory中的代理方法，判断方法是否设置了延迟加载，如果设置了则延迟加载关联查询
+
+3、Mybatis都有哪些Executor执行器？它们之间的区别是什么？
+BaseExecuter：Executor基类，提供基础的方法
+BatchExecuter：批量执行实现类，封装batchResultList和statementList，执行批处理，有效减少数据库连接次数
+ReuseExecuter：可重用Executor 实现类，，优先从缓存中获取相应的Statement，执行后不close，可节省资源
+SimpleExecuter：简单的Executor 实现类，每次doUpdate，doQuery都创建新的Statement，执行后close
+
+4、简述下Mybatis的一级、二级缓存（分别从存储结构、范围、失效场景。三个方面来作答）？
+一级缓存，二级缓存存储结构相同：HashMap，Key为CacheKey 由statementId、offset、limit、sql、传参 数组对象集合组成。value为查询数据
+一级缓存为sqlSession缓存，sqlSession之间不共享
+二级缓存为mapper缓存，可对多个sqlSession共享，查询对象必须序列化，分布式场景会出现数据不一致现象，可配置分布式缓存（实现cache接口）进行配置实现
+失效场景：都是当对数据库进行数据更新、新增、删除操作提交后失效
