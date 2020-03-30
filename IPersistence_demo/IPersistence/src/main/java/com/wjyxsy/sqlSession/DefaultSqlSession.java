@@ -2,6 +2,7 @@ package com.wjyxsy.sqlSession;
 
 import com.wjyxsy.pojo.Configuration;
 import com.wjyxsy.pojo.MappedStatement;
+import com.wjyxsy.utils.SqlType;
 
 import java.lang.reflect.*;
 import java.util.List;
@@ -67,7 +68,7 @@ public class DefaultSqlSession implements SqlSession {
                 }
                 String sqlType = mappedStatement.getSqlType();
 
-                if ("select".equals(sqlType)) {
+                if (SqlType.select.equals(sqlType)) {
                     Type genericReturnType = method.getGenericReturnType();
                     if (genericReturnType instanceof ParameterizedType) {
                         List<Object> objects = selectList(statementId, args);
@@ -75,13 +76,13 @@ public class DefaultSqlSession implements SqlSession {
                     }
                     return selectOne(statementId, args);
                 }
-                if ("insert".equals(sqlType)) {
+                if (SqlType.insert.equals(sqlType)) {
                     return insert(statementId, args);
                 }
-                if ("update".equals(sqlType)) {
+                if (SqlType.update.equals(sqlType)) {
                     return update(statementId, args);
                 }
-                if ("delete".equals(sqlType)) {
+                if (SqlType.delete.equals(sqlType)) {
                     return delete(statementId, args);
                 }
 

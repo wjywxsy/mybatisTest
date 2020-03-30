@@ -8,6 +8,7 @@
         select * from user
     </select>
 
+    <!--id 自增 -->
     <insert id="insertUser" paramterType="com.wjyxsy.entity.User">
         insert into user (username) values (#{username})
     </insert>
